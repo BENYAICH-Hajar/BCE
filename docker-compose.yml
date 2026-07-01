@@ -1,0 +1,177 @@
+services:
+
+  # ============================================================
+  # MongoDB — base de données principale
+  # collections : enterprises, downloads (State DB)
+  # ============================================================
+  mongo:
+    image: mongo:7
+    container_name: bce_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Tor proxies — 3 instances pour rotation IP
+  # Ports SOCKS5 : 9050, 9052, 9054
+  # Ports contrôle : 9051, 9053, 9055
+  # ============================================================
+  tor1:
+    image: dperson/torproxy
+    container_name: tor1
+    restart: unless-stopped
+    ports:
+      - "9050:9050"
+      - "9051:9051"
+    environment:
+      - CONTROL_PASSWORD=mypass
+
+  tor2:
+    image: dperson/torproxy
+    container_name: tor2
+    restart: unless-stopped
+    ports:
+      - "9052:9050"
+      - "9053:9051"
+    environment:
+      - CONTROL_PASSWORD=mypass
+
+  tor3:
+    image: dperson/torproxy
+    container_name: tor3
+    restart: unless-stopped
+    ports:
+      - "9054:9050"
+      - "9055:9051"
+    environment:
+      - CONTROL_PASSWORD=mypass
+
+  # ============================================================
+  # Airflow — base de données interne (PostgreSQL)
+  # ============================================================
+  postgres:
+    image: postgres:15
+    container_name: bce_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Airflow Init — initialise la base et crée l'admin
+  # ============================================================
+  airflow-init:
+    image: apache/airflow:2.9.1
+    container_name: bce_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      MONGO_URI: mongodb://mongo:27017
+      BRONZE_DIR: /opt/airflow/bronze
+      KBO_DATA_DIR: /opt/airflow/data/KBO
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./bronze:/opt/airflow/bronze
+      - ./data:/opt/airflow/data
+      - ./notaire_cookies.json:/opt/airflow/notaire_cookies.json
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create
+          --username admin
+          --password admin
+          --firstname Admin
+          --lastname User
+          --role Admin
+          --email admin@bce.be
+      "
+    restart: on-failure
+
+  # ============================================================
+  # Airflow Webserver — interface web (http://localhost:8080)
+  # login : admin / admin
+  # ============================================================
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    container_name: bce_airflow_webserver
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      MONGO_URI: mongodb://mongo:27017
+      BRONZE_DIR: /opt/airflow/bronze
+      KBO_DATA_DIR: /opt/airflow/data/KBO
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./bronze:/opt/airflow/bronze
+      - ./data:/opt/airflow/data
+      - ./notaire_cookies.json:/opt/airflow/notaire_cookies.json
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================
+  # Airflow Scheduler — exécute les DAGs automatiquement
+  # ============================================================
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    container_name: bce_airflow_scheduler
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      MONGO_URI: mongodb://mongo:27017
+      BRONZE_DIR: /opt/airflow/bronze
+      KBO_DATA_DIR: /opt/airflow/data/KBO
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./scripts:/opt/airflow/scripts
+      - ./bronze:/opt/airflow/bronze
+      - ./data:/opt/airflow/data
+      - ./notaire_cookies.json:/opt/airflow/notaire_cookies.json
+    command: scheduler
+
+volumes:
+  mongo_data:
+  postgres_data:

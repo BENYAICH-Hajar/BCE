@@ -95,7 +95,7 @@ def get_hotellerie_enterprises(db) -> list[dict]:
         # Filtre de base
         {"$match": {
             "Status": "AC",
-            "TypeOfEnterprise": "2",
+            
             "JuridicalForm": {"$nin": list(JURIDICAL_EXCLUDED)},
         }},
         # Lookup activités
@@ -367,20 +367,35 @@ def main():
     if args.dry_run:
         log.info("MODE DRY-RUN — aucun fichier ne sera téléchargé")
 
-    total = 0
+    total       = 0
+    consecutive_429 = 0
+
     for i, ent in enumerate(enterprises):
         bce  = ent["EnterpriseNumber"]
         name = ent.get("denomination_principale") or ent.get("denomination", bce)
+
+        # Skip si déjà done
+        if is_done(bce, SOURCE, "hotellerie_target"):
+            log.info(f"[{i+1}/{len(enterprises)}] SKIP {bce} (déjà done)")
+            continue
+
         log.info(f"\n[{i+1}/{len(enterprises)}] {bce} — {name[:50]}")
 
         try:
             count = scrape_enterprise(bce, name, dry_run=args.dry_run)
             total += count
+            consecutive_429 = 0
+            # Pause polie entre chaque entreprise
+            time.sleep(2)
         except Exception as e:
-            log.error(f"  Erreur : {e}")
-            mark_error(bce, SOURCE, "hotellerie_target", str(e))
-
-        time.sleep(0.5)
+            err = str(e)
+            log.error(f"  Erreur : {err}")
+            mark_error(bce, SOURCE, "hotellerie_target", err)
+            if "429" in err:
+                consecutive_429 += 1
+                wait = min(300, 60 * consecutive_429)
+                log.warning(f"  429 consécutifs={consecutive_429} — pause {wait}s")
+                time.sleep(wait)
 
     log.info(f"\n✅ Scraping hôtellerie terminé — {total} fichiers téléchargés")
     log.info(f"   Dossier : {BRONZE_DIR / 'nbb' / 'hotellerie'}")

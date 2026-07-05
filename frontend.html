@@ -4,444 +4,99 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BCE Hôtellerie — Analyse financière</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     :root {
-      --navy:    #0F1B2D;
-      --ink:     #1C2B3A;
-      --steel:   #2E4057;
-      --gold:    #C9A84C;
-      --gold2:   #E8C97A;
-      --cream:   #F7F3EC;
-      --mist:    #EEF2F7;
-      --text:    #1A1A2E;
-      --sub:     #5A6B7C;
-      --border:  #D6DDE8;
-      --green:   #2D8C5E;
-      --red:     #C0392B;
-      --radius:  8px;
-      --shadow:  0 2px 12px rgba(15,27,45,0.10);
+      --navy:#0F1B2D;--ink:#1C2B3A;--steel:#2E4057;
+      --gold:#C9A84C;--gold2:#E8C97A;--cream:#F7F3EC;
+      --mist:#EEF2F7;--text:#1A1A2E;--sub:#5A6B7C;
+      --border:#D6DDE8;--green:#2D8C5E;--red:#C0392B;
+      --radius:8px;--shadow:0 2px 12px rgba(15,27,45,.10);
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--mist);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Header ── */
-    header {
-      background: var(--navy);
-      padding: 0 2rem;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    header .logo {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    header .logo span { color: #fff; font-weight: 300; }
-    header .tagline {
-      color: #7A8FA6;
-      font-size: 0.78rem;
-      border-left: 1px solid #2E4057;
-      padding-left: 1rem;
-    }
-
-    /* ── Layout ── */
-    .app { display: flex; height: calc(100vh - 60px); }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 360px;
-      min-width: 300px;
-      background: #fff;
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .search-box {
-      padding: 1.25rem 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .search-box label {
-      display: block;
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--sub);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.5rem;
-    }
-    .search-input-wrap {
-      position: relative;
-    }
-    .search-input-wrap input {
-      width: 100%;
-      padding: 0.6rem 0.75rem 0.6rem 2.2rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .search-input-wrap input:focus { border-color: var(--gold); }
-    .search-input-wrap .icon {
-      position: absolute;
-      left: 0.65rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--sub);
-      font-size: 0.9rem;
-    }
-
-    .results-list {
-      flex: 1;
-      overflow-y: auto;
-    }
-    .result-count {
-      padding: 0.6rem 1rem;
-      font-size: 0.72rem;
-      color: var(--sub);
-      background: var(--mist);
-      border-bottom: 1px solid var(--border);
-    }
-    .result-item {
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: background 0.1s;
-    }
-    .result-item:hover { background: var(--mist); }
-    .result-item.active { background: #EEF6FF; border-left: 3px solid var(--gold); }
-    .result-item .name {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.2rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .result-item .bce {
-      font-size: 0.75rem;
-      color: var(--sub);
-      font-family: monospace;
-    }
-    .result-item .badge {
-      display: inline-block;
-      font-size: 0.65rem;
-      padding: 1px 6px;
-      border-radius: 3px;
-      background: #E8F5E9;
-      color: var(--green);
-      font-weight: 600;
-      margin-left: 0.4rem;
-    }
-
-    /* ── Main panel ── */
-    .main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.5rem 2rem;
-    }
-
-    /* ── Empty state ── */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--sub);
-      gap: 0.75rem;
-    }
-    .empty-state .big-icon { font-size: 3rem; opacity: 0.3; }
-    .empty-state p { font-size: 0.9rem; }
-
-    /* ── Fiche entreprise ── */
-    .fiche-header {
-      background: var(--navy);
-      border-radius: 10px;
-      padding: 1.5rem 2rem;
-      color: #fff;
-      margin-bottom: 1.5rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .fiche-header::after {
-      content: '';
-      position: absolute;
-      right: -20px; top: -20px;
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      background: rgba(201,168,76,0.12);
-    }
-    .fiche-header .company-name {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-      color: #fff;
-    }
-    .fiche-header .meta {
-      font-size: 0.82rem;
-      color: #8AADCC;
-      display: flex;
-      gap: 1.2rem;
-      flex-wrap: wrap;
-    }
-    .fiche-header .meta span { display: flex; align-items: center; gap: 0.3rem; }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-    .status-badge.ac { background: rgba(45,140,94,0.25); color: #5DD6A0; }
-    .status-badge.stop { background: rgba(192,57,43,0.25); color: #E87878; }
-
-    /* ── Grid ratios ── */
-    .section-title {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--sub);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .cards-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-    .kpi-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem;
-      box-shadow: var(--shadow);
-    }
-    .kpi-card .label {
-      font-size: 0.68rem;
-      color: var(--sub);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 0.4rem;
-    }
-    .kpi-card .value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--navy);
-    }
-    .kpi-card .value.pos { color: var(--green); }
-    .kpi-card .value.neg { color: var(--red); }
-    .kpi-card .sub-label {
-      font-size: 0.68rem;
-      color: var(--sub);
-      margin-top: 0.2rem;
-    }
-
-    /* ── Tableau années ── */
-    .table-wrap {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-    thead { background: var(--navy); color: #fff; }
-    thead th {
-      padding: 0.6rem 0.9rem;
-      text-align: right;
-      font-weight: 600;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-    }
-    thead th:first-child { text-align: left; }
-    tbody tr:nth-child(even) { background: var(--mist); }
-    tbody td {
-      padding: 0.55rem 0.9rem;
-      text-align: right;
-      color: var(--text);
-      border-bottom: 1px solid var(--border);
-    }
-    tbody td:first-child {
-      text-align: left;
-      font-weight: 600;
-      color: var(--navy);
-    }
-    .pos-val { color: var(--green); font-weight: 600; }
-    .neg-val { color: var(--red); font-weight: 600; }
-
-    /* ── Sankey simple ── */
-    .sankey-wrap {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-    .sankey-year-select {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.25rem;
-      flex-wrap: wrap;
-    }
-    .year-btn {
-      padding: 4px 12px;
-      border-radius: 20px;
-      border: 1.5px solid var(--border);
-      background: #fff;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      color: var(--sub);
-      transition: all 0.15s;
-    }
-    .year-btn.active {
-      background: var(--navy);
-      border-color: var(--navy);
-      color: #fff;
-    }
-    .sankey-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .sankey-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .sankey-label {
-      width: 120px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--sub);
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .sankey-bar-wrap {
-      flex: 1;
-      background: var(--mist);
-      border-radius: 4px;
-      height: 28px;
-      overflow: hidden;
-    }
-    .sankey-bar {
-      height: 100%;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      padding-left: 8px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #fff;
-      min-width: 2px;
-      transition: width 0.5s ease;
-    }
-    .sankey-bar.ca    { background: linear-gradient(90deg, #1A4B8C, #2E6DB4); }
-    .sankey-bar.mb    { background: linear-gradient(90deg, #1A7A5E, #2D8C5E); }
-    .sankey-bar.rn    { background: linear-gradient(90deg, #7A5200, var(--gold)); }
-    .sankey-bar.neg   { background: linear-gradient(90deg, #8B2020, var(--red)); }
-    .sankey-value {
-      width: 110px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--navy);
-      flex-shrink: 0;
-    }
-
-    /* ── Statuts notaire ── */
-    .statuts-wrap {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-    .statut-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .statut-item:last-child { border-bottom: none; }
-    .statut-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--gold);
-      margin-top: 5px;
-      flex-shrink: 0;
-    }
-    .statut-title { font-size: 0.83rem; font-weight: 600; color: var(--text); }
-    .statut-date  { font-size: 0.72rem; color: var(--sub); margin-top: 2px; }
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid var(--border);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      margin-right: 0.4rem;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-row {
-      font-size: 0.8rem;
-      color: var(--sub);
-      padding: 0.75rem 0;
-      display: flex;
-      align-items: center;
-    }
-
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--mist);color:var(--text);min-height:100vh}
+    header{background:var(--navy);padding:0 2rem;height:60px;display:flex;align-items:center;gap:1rem;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    header .logo{font-size:1.1rem;font-weight:700;color:var(--gold);letter-spacing:.05em;text-transform:uppercase}
+    header .logo span{color:#fff;font-weight:300}
+    header .tagline{color:#7A8FA6;font-size:.78rem;border-left:1px solid #2E4057;padding-left:1rem}
+    .app{display:flex;height:calc(100vh - 60px)}
+    .sidebar{width:340px;min-width:280px;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column}
+    .search-box{padding:1.25rem 1rem;border-bottom:1px solid var(--border)}
+    .search-box label{display:block;font-size:.7rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+    .search-input-wrap{position:relative}
+    .search-input-wrap input{width:100%;padding:.6rem .75rem .6rem 2.2rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.9rem;outline:none;transition:border-color .15s}
+    .search-input-wrap input:focus{border-color:var(--gold)}
+    .search-input-wrap .icon{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--sub);font-size:.9rem}
+    .results-list{flex:1;overflow-y:auto}
+    .result-count{padding:.6rem 1rem;font-size:.72rem;color:var(--sub);background:var(--mist);border-bottom:1px solid var(--border)}
+    .result-item{padding:.85rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+    .result-item:hover{background:var(--mist)}
+    .result-item.active{background:#EEF6FF;border-left:3px solid var(--gold)}
+    .result-item .name{font-size:.88rem;font-weight:600;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .result-item .bce{font-size:.75rem;color:var(--sub);font-family:monospace}
+    .badge{display:inline-block;font-size:.65rem;padding:1px 6px;border-radius:3px;background:#E8F5E9;color:var(--green);font-weight:600;margin-left:.4rem}
+    .main{flex:1;overflow-y:auto;padding:1.5rem 2rem}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--sub);gap:.75rem}
+    .empty-state .big-icon{font-size:3rem;opacity:.3}
+    .fiche-header{background:var(--navy);border-radius:10px;padding:1.5rem 2rem;color:#fff;margin-bottom:1.5rem}
+    .fiche-header .company-name{font-size:1.4rem;font-weight:700;margin-bottom:.4rem}
+    .fiche-header .meta{font-size:.82rem;color:#8AADCC;display:flex;gap:1.2rem;flex-wrap:wrap}
+    .status-badge{display:inline-flex;align-items:center;gap:.3rem;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
+    .status-badge.ac{background:rgba(45,140,94,.25);color:#5DD6A0}
+    .section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sub);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+    .cards-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-bottom:1.5rem}
+    .kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+    .kpi-card .label{font-size:.68rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem}
+    .kpi-card .value{font-size:1.2rem;font-weight:700;color:var(--navy)}
+    .kpi-card .value.pos{color:var(--green)}
+    .kpi-card .value.neg{color:var(--red)}
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+    .chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)}
+    .chart-card h3{font-size:.78rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem}
+    .chart-card canvas{max-height:200px}
+    .table-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:1.5rem}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    thead{background:var(--navy);color:#fff}
+    thead th{padding:.6rem .9rem;text-align:right;font-size:.73rem;font-weight:600}
+    thead th:first-child{text-align:left}
+    tbody tr:nth-child(even){background:var(--mist)}
+    tbody td{padding:.55rem .9rem;text-align:right;border-bottom:1px solid var(--border)}
+    tbody td:first-child{text-align:left;font-weight:600;color:var(--navy)}
+    .pos-val{color:var(--green);font-weight:600}
+    .neg-val{color:var(--red);font-weight:600}
+    .statuts-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);margin-bottom:1.5rem}
+    .statut-item{display:flex;align-items:flex-start;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
+    .statut-item:last-child{border-bottom:none}
+    .statut-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:5px;flex-shrink:0}
+    .statut-title{font-size:.83rem;font-weight:600}
+    .statut-date{font-size:.72rem;color:var(--sub);margin-top:2px}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-right:.4rem}
+    .loading-row{font-size:.8rem;color:var(--sub);padding:.75rem 0;display:flex;align-items:center}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    .sankey-bars{display:flex;flex-direction:column;gap:.75rem}
+    .sankey-row{display:flex;align-items:center;gap:.75rem}
+    .sankey-label{width:110px;font-size:.75rem;font-weight:600;color:var(--sub);text-align:right;flex-shrink:0}
+    .sankey-bar-wrap{flex:1;background:var(--mist);border-radius:4px;height:26px;overflow:hidden}
+    .sankey-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:.7rem;font-weight:700;color:#fff;min-width:4px;transition:width .5s ease}
+    .sankey-bar.ca{background:linear-gradient(90deg,#1A4B8C,#2E6DB4)}
+    .sankey-bar.mb{background:linear-gradient(90deg,#1A7A5E,#2D8C5E)}
+    .sankey-bar.rn.pos{background:linear-gradient(90deg,#7A5200,var(--gold))}
+    .sankey-bar.rn.neg{background:linear-gradient(90deg,#8B2020,var(--red))}
+    .sankey-value{width:100px;font-size:.76rem;font-weight:700;color:var(--navy);flex-shrink:0}
+    .year-btn{padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:.76rem;font-weight:600;cursor:pointer;color:var(--sub);transition:all .15s}
+    .year-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+    .year-select{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
   </style>
 </head>
 <body>
-
 <header>
   <div class="logo">BCE <span>Hôtellerie</span></div>
   <div class="tagline">Analyse financière · Belgique · 2021–2025</div>
 </header>
-
 <div class="app">
-
-  <!-- Sidebar recherche -->
   <aside class="sidebar">
     <div class="search-box">
       <label>Rechercher une entreprise</label>
@@ -453,45 +108,40 @@
     <div id="resultCount" class="result-count" style="display:none"></div>
     <div class="results-list" id="resultsList"></div>
   </aside>
-
-  <!-- Main panel -->
   <main class="main" id="mainPanel">
     <div class="empty-state">
       <div class="big-icon">🏨</div>
       <p>Recherchez une entreprise hôtelière belge</p>
-      <p style="font-size:0.78rem">Données KBO · NBB · 2021–2025</p>
+      <p style="font-size:.78rem">Données KBO · NBB · 2021–2025</p>
     </div>
   </main>
-
 </div>
-
 <script>
 const API = 'http://localhost:8000';
 let searchTimer = null;
-let activeResults = [];
+let charts = {};
 
-// ── Utilitaires ──
-const fmt = (n, dec=0) => {
-  if (n == null || n === 0) return '—';
-  return new Intl.NumberFormat('fr-BE', {
-    minimumFractionDigits: dec,
-    maximumFractionDigits: dec,
-  }).format(n);
+const fmt = (n,d=0) => n==null||n===0?'—':new Intl.NumberFormat('fr-BE',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const fmtEur = n => {
+  if(n==null) return '—';
+  if(Math.abs(n)>=1e6) return `${fmt(n/1e6,2)} M€`;
+  if(Math.abs(n)>=1e3) return `${fmt(n/1e3,1)} k€`;
+  return `${fmt(n,0)} €`;
 };
-const fmtEur = (n) => {
-  if (n == null || n === 0) return '—';
-  if (Math.abs(n) >= 1e6) return `${fmt(n/1e6, 2)} M€`;
-  if (Math.abs(n) >= 1e3) return `${fmt(n/1e3, 1)} k€`;
-  return `${fmt(n, 0)} €`;
-};
-const fmtPct = (n) => n == null ? '—' : `${fmt(n, 1)}%`;
-const cls = (n) => n == null ? '' : n >= 0 ? 'pos-val' : 'neg-val';
+const fmtPct = n => n==null?'—':`${fmt(n,1)}%`;
+const cls = n => n==null?'':(n>=0?'pos-val':'neg-val');
 
-// ── Recherche ──
-document.getElementById('searchInput').addEventListener('input', (e) => {
+// Destroy all charts
+function destroyCharts() {
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('input', e => {
   clearTimeout(searchTimer);
   const q = e.target.value.trim();
-  if (q.length < 2) {
+  if(q.length < 2) {
     document.getElementById('resultsList').innerHTML = '';
     document.getElementById('resultCount').style.display = 'none';
     return;
@@ -506,128 +156,109 @@ async function doSearch(q) {
     renderResults(data.results);
     const el = document.getElementById('resultCount');
     el.style.display = 'block';
-    el.textContent = `${data.count} résultat${data.count > 1 ? 's' : ''}`;
-  } catch (e) {
-    console.error(e);
-  }
+    el.textContent = `${data.count} résultat${data.count>1?'s':''}`;
+  } catch(e) { console.error(e); }
 }
 
 function renderResults(results) {
-  activeResults = results;
   const list = document.getElementById('resultsList');
-  if (!results.length) {
-    list.innerHTML = '<div style="padding:1.5rem 1rem;color:#5A6B7C;font-size:0.83rem">Aucun résultat</div>';
-    return;
-  }
-  list.innerHTML = results.map((r, i) => `
-    <div class="result-item" onclick="loadEnterprise('${r.EnterpriseNumber}', ${i})" data-idx="${i}">
-      <div class="name">${r.denomination_principale || '—'} <span class="badge">AC</span></div>
+  if(!results.length) { list.innerHTML = '<div style="padding:1.5rem 1rem;color:#5A6B7C;font-size:.83rem">Aucun résultat</div>'; return; }
+  list.innerHTML = results.map((r,i) => `
+    <div class="result-item" onclick="loadEnterprise('${r.EnterpriseNumber}',${i})" data-idx="${i}">
+      <div class="name">${r.denomination_principale||'—'} <span class="badge">AC</span></div>
       <div class="bce">${r.EnterpriseNumber}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ── Chargement fiche ──
 async function loadEnterprise(bce, idx) {
-  // Marquer actif
   document.querySelectorAll('.result-item').forEach(el => el.classList.remove('active'));
   document.querySelector(`[data-idx="${idx}"]`)?.classList.add('active');
-
+  destroyCharts();
   const panel = document.getElementById('mainPanel');
   panel.innerHTML = '<div class="empty-state"><div class="spinner" style="width:30px;height:30px;border-width:3px"></div></div>';
-
   try {
     const [entRes, ratiosRes] = await Promise.all([
       fetch(`${API}/enterprise/${encodeURIComponent(bce)}`),
-      fetch(`${API}/enterprise/${encodeURIComponent(bce)}/ratios`),
+      fetch(`${API}/enterprise/${encodeURIComponent(bce)}/ratios`)
     ]);
-    const ent    = await entRes.json();
+    const ent = await entRes.json();
     const ratios = await ratiosRes.json();
     renderFiche(ent, ratios);
-  } catch (e) {
-    panel.innerHTML = `<div class="empty-state"><p>Erreur de chargement : ${e.message}</p></div>`;
+  } catch(e) {
+    panel.innerHTML = `<div class="empty-state"><p>Erreur : ${e.message}</p></div>`;
   }
 }
 
-// ── Rendu fiche ──
 function renderFiche(ent, ratios) {
   const s = ent.silver || {};
-  const years = (ratios.years || []).sort((a, b) => b.year - a.year);
+  const years = (ratios.years||[]).sort((a,b)=>b.year-a.year);
   const latest = years[0] || {};
-
   const panel = document.getElementById('mainPanel');
-  panel.innerHTML = `
 
-    <!-- Header -->
+  panel.innerHTML = `
     <div class="fiche-header">
-      <div class="company-name">${s.denomination_principale || ent.enterprise_number}</div>
+      <div class="company-name">${s.denomination_principale||ent.enterprise_number}</div>
       <div class="meta">
         <span>📋 ${ent.enterprise_number}</span>
-        <span>⚖️ ${s.JuridicalFormLabel || s.JuridicalForm || '—'}</span>
-        <span>${s.Status === 'AC'
-          ? '<span class="status-badge ac">● Actif</span>'
-          : '<span class="status-badge stop">● Arrêté</span>'}</span>
-        ${s.address ? `<span>📍 ${s.address.MunicipalityFR || s.address.Municipality || ''}</span>` : ''}
+        <span>⚖️ ${s.JuridicalFormLabel||s.JuridicalForm||'—'}</span>
+        <span>${s.Status==='AC'?'<span class="status-badge ac">● Actif</span>':'<span class="status-badge">● Arrêté</span>'}</span>
+        ${s.address?`<span>📍 ${s.address.MunicipalityFR||s.address.Municipality||''}</span>`:''}
       </div>
     </div>
 
-    <!-- KPIs dernière année -->
     ${years.length ? `
     <div class="section-title">Indicateurs ${latest.year}</div>
     <div class="cards-row">
-      <div class="kpi-card">
-        <div class="label">Chiffre d'affaires</div>
-        <div class="value">${fmtEur(latest.chiffre_affaires)}</div>
+      <div class="kpi-card"><div class="label">Chiffre d'affaires</div><div class="value">${fmtEur(latest.chiffre_affaires)}</div></div>
+      <div class="kpi-card"><div class="label">Marge brute</div><div class="value ${(latest.marge_brute||0)>=0?'pos':'neg'}">${fmtEur(latest.marge_brute)}</div></div>
+      <div class="kpi-card"><div class="label">Résultat net</div><div class="value ${(latest.resultat_net||0)>=0?'pos':'neg'}">${fmtEur(latest.resultat_net)}</div></div>
+      <div class="kpi-card"><div class="label">Marge nette</div><div class="value ${(latest.ratios?.marge_nette_pct||0)>=0?'pos':'neg'}">${fmtPct(latest.ratios?.marge_nette_pct)}</div></div>
+      <div class="kpi-card"><div class="label">ROE</div><div class="value ${(latest.ratios?.roe_pct||0)>=0?'pos':'neg'}">${fmtPct(latest.ratios?.roe_pct)}</div></div>
+      <div class="kpi-card"><div class="label">Trésorerie</div><div class="value">${fmtEur(latest.tresorerie)}</div></div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="section-title">Graphiques financiers</div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Résultat net (€)</h3>
+        <canvas id="chartResultat"></canvas>
       </div>
-      <div class="kpi-card">
-        <div class="label">Marge brute</div>
-        <div class="value ${latest.marge_brute >= 0 ? 'pos' : 'neg'}">${fmtEur(latest.marge_brute)}</div>
+      <div class="chart-card">
+        <h3>ROE (%)</h3>
+        <canvas id="chartRoe"></canvas>
       </div>
-      <div class="kpi-card">
-        <div class="label">Résultat net</div>
-        <div class="value ${latest.resultat_net >= 0 ? 'pos' : 'neg'}">${fmtEur(latest.resultat_net)}</div>
+      <div class="chart-card">
+        <h3>Chiffre d'affaires (€)</h3>
+        <canvas id="chartCa"></canvas>
       </div>
-      <div class="kpi-card">
-        <div class="label">Marge nette</div>
-        <div class="value ${(latest.ratios?.marge_nette_pct || 0) >= 0 ? 'pos' : 'neg'}">${fmtPct(latest.ratios?.marge_nette_pct)}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">ROE</div>
-        <div class="value ${(latest.ratios?.roe_pct || 0) >= 0 ? 'pos' : 'neg'}">${fmtPct(latest.ratios?.roe_pct)}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">Trésorerie</div>
-        <div class="value">${fmtEur(latest.tresorerie)}</div>
+      <div class="chart-card">
+        <h3>Endettement vs Liquidité</h3>
+        <canvas id="chartRatios"></canvas>
       </div>
     </div>
 
-    <!-- Sankey -->
-    <div class="sankey-wrap" id="sankeyWrap">
-      <div class="section-title">Flux financiers</div>
-      <div class="sankey-year-select" id="yearSelect">
-        ${years.map(y => `<button class="year-btn" onclick="updateSankey(${y.year})">${y.year}</button>`).join('')}
+    <!-- Flux financiers Sankey -->
+    <div class="section-title">Flux financiers</div>
+    <div class="chart-card" style="margin-bottom:1.5rem">
+      <div class="year-select" id="yearSelect">
+        ${years.map(y=>`<button class="year-btn" onclick="updateSankey(${y.year})">${y.year}</button>`).join('')}
       </div>
       <div class="sankey-bars" id="sankeyBars"></div>
     </div>
 
-    <!-- Tableau ratios -->
+    <!-- Tableau -->
     <div class="section-title">Ratios par exercice</div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Exercice</th>
-            <th>CA</th>
-            <th>Marge brute</th>
-            <th>Résultat net</th>
-            <th>Marge nette</th>
-            <th>ROE</th>
-            <th>Liquidité</th>
-            <th>Endettement</th>
+            <th>Exercice</th><th>CA</th><th>Marge brute</th><th>Résultat net</th>
+            <th>Marge nette</th><th>ROE</th><th>Liquidité</th><th>Endettement</th>
           </tr>
         </thead>
         <tbody>
-          ${years.map(y => `
+          ${years.map(y=>`
             <tr>
               <td>${y.year}</td>
               <td>${fmtEur(y.chiffre_affaires)}</td>
@@ -635,124 +266,172 @@ function renderFiche(ent, ratios) {
               <td class="${cls(y.resultat_net)}">${fmtEur(y.resultat_net)}</td>
               <td class="${cls(y.ratios?.marge_nette_pct)}">${fmtPct(y.ratios?.marge_nette_pct)}</td>
               <td class="${cls(y.ratios?.roe_pct)}">${fmtPct(y.ratios?.roe_pct)}</td>
-              <td>${fmt(y.ratios?.ratio_liquidite, 2)}</td>
-              <td>${fmtPct(y.ratios?.taux_endettement_pct)}</td>
-            </tr>
-          `).join('')}
+              <td>${fmt(y.ratios?.ratio_liquidite,2)}</td>
+              <td class="${cls(y.ratios?.taux_endettement_pct)}">${fmtPct(y.ratios?.taux_endettement_pct)}</td>
+            </tr>`).join('')}
         </tbody>
       </table>
     </div>
-    ` : '<div class="empty-state" style="height:200px"><p>Aucune donnée financière disponible</p></div>'}
+    ` : '<div style="background:#fff;border-radius:8px;padding:2rem;text-align:center;color:var(--sub);margin-bottom:1.5rem">Aucune donnée financière disponible</div>'}
 
-    <!-- Statuts notaire -->
     <div class="section-title">Statuts notariés</div>
     <div class="statuts-wrap" id="statutsWrap">
-      <div class="loading-row"><span class="spinner"></span> Chargement des statuts…</div>
+      <div class="loading-row"><span class="spinner"></span> Chargement…</div>
     </div>
-
   `;
 
-  // Init Sankey sur la dernière année
-  if (years.length) {
+  if(years.length) {
     window._yearsData = years;
+    buildCharts(years);
     updateSankey(latest.year);
   }
-
-  // Lancer SSE statuts
   loadStatuts(ent.enterprise_number);
 }
 
-// ── Sankey ──
-function updateSankey(year) {
-  const years = window._yearsData || [];
-  const y = years.find(d => d.year === year);
-  if (!y) return;
+function buildCharts(years) {
+  const labels = years.map(y=>y.year.toString()).reverse();
+  const colors = {
+    blue: 'rgba(46,109,180,0.85)',
+    green: 'rgba(45,140,94,0.85)',
+    gold: 'rgba(201,168,76,0.85)',
+    red: 'rgba(192,57,43,0.85)',
+  };
+  const gridColor = 'rgba(214,221,232,0.5)';
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: gridColor }, ticks: { font: { size: 11 } } }
+    }
+  };
 
-  // Activer le bon bouton
-  document.querySelectorAll('.year-btn').forEach(btn => {
-    btn.classList.toggle('active', parseInt(btn.textContent) === year);
+  // Résultat net
+  const rnData = years.map(y=>y.resultat_net||0).reverse();
+  charts.resultat = new Chart(document.getElementById('chartResultat'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: rnData,
+        backgroundColor: rnData.map(v=>v>=0?colors.green:colors.red),
+        borderRadius: 4,
+      }]
+    },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => fmtEur(ctx.raw) } } } }
   });
 
-  const ca = y.chiffre_affaires || 0;
-  const mb = y.marge_brute || 0;
-  const rn = y.resultat_net || 0;
-  const max = Math.max(Math.abs(ca), 1);
+  // ROE
+  const roeData = years.map(y=>y.ratios?.roe_pct||null).reverse();
+  charts.roe = new Chart(document.getElementById('chartRoe'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: roeData,
+        borderColor: colors.gold,
+        backgroundColor: 'rgba(201,168,76,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: colors.gold,
+        pointRadius: 5,
+      }]
+    },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, tooltip: { callbacks: { label: ctx => ctx.raw!=null?`${fmt(ctx.raw,1)}%`:'—' } } } }
+  });
 
-  const pct = (v) => Math.max(2, Math.min(100, Math.abs(v) / max * 100));
+  // CA
+  const caData = years.map(y=>y.chiffre_affaires||0).reverse();
+  const hasCA = caData.some(v=>v!==0);
+  charts.ca = new Chart(document.getElementById('chartCa'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: hasCA ? caData : years.map(y=>y.fonds_propres||0).reverse(),
+        backgroundColor: colors.blue,
+        borderRadius: 4,
+        label: hasCA ? 'CA' : 'Fonds propres',
+      }]
+    },
+    options: {
+      ...baseOpts,
+      plugins: {
+        legend: { display: !hasCA },
+        tooltip: { callbacks: { label: ctx => fmtEur(ctx.raw) } }
+      }
+    }
+  });
+  if(!hasCA) document.querySelector('#chartCa').closest('.chart-card').querySelector('h3').textContent = 'Fonds propres (€)';
 
-  document.getElementById('sankeyBars').innerHTML = `
-    <div class="sankey-row">
-      <div class="sankey-label">Chiffre d'affaires</div>
-      <div class="sankey-bar-wrap">
-        <div class="sankey-bar ca" style="width:${pct(ca)}%">${ca > 0 ? fmtEur(ca) : ''}</div>
-      </div>
-      <div class="sankey-value">${fmtEur(ca)}</div>
-    </div>
-    <div class="sankey-row">
-      <div class="sankey-label">Marge brute</div>
-      <div class="sankey-bar-wrap">
-        <div class="sankey-bar ${mb >= 0 ? 'mb' : 'neg'}" style="width:${pct(mb)}%">${mb !== 0 ? fmtEur(mb) : ''}</div>
-      </div>
-      <div class="sankey-value">${fmtEur(mb)}</div>
-    </div>
-    <div class="sankey-row">
-      <div class="sankey-label">Résultat net</div>
-      <div class="sankey-bar-wrap">
-        <div class="sankey-bar ${rn >= 0 ? 'rn' : 'neg'}" style="width:${pct(rn)}%">${rn !== 0 ? fmtEur(rn) : ''}</div>
-      </div>
-      <div class="sankey-value">${fmtEur(rn)}</div>
-    </div>
-  `;
+  // Endettement vs Liquidité
+  const endData = years.map(y=>y.ratios?.taux_endettement_pct||null).reverse();
+  const liqData = years.map(y=>y.ratios?.ratio_liquidite!=null?y.ratios.ratio_liquidite*100:null).reverse();
+  charts.ratios = new Chart(document.getElementById('chartRatios'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Endettement %', data: endData, borderColor: colors.red, backgroundColor: 'rgba(192,57,43,0.1)', fill: false, tension: 0.3, pointRadius: 4 },
+        { label: 'Liquidité ×100', data: liqData, borderColor: colors.blue, backgroundColor: 'rgba(46,109,180,0.1)', fill: false, tension: 0.3, pointRadius: 4 }
+      ]
+    },
+    options: { ...baseOpts, plugins: { legend: { display: true, labels: { font: { size: 11 }, boxWidth: 12 } } } }
+  });
 }
 
-// ── SSE Statuts notaire ──
+function updateSankey(year) {
+  const years = window._yearsData || [];
+  const y = years.find(d=>d.year===year);
+  if(!y) return;
+  document.querySelectorAll('.year-btn').forEach(btn=>btn.classList.toggle('active', parseInt(btn.textContent)===year));
+  const ca = y.chiffre_affaires||0;
+  const mb = y.marge_brute||0;
+  const rn = y.resultat_net||0;
+  const fp = y.fonds_propres||0;
+  const max = Math.max(Math.abs(ca),Math.abs(mb),Math.abs(rn),Math.abs(fp),1);
+  const pct = v => Math.max(2, Math.min(100, Math.abs(v)/max*100));
+
+  const rows = [
+    {label:'Chiffre d\'affaires', val:ca, cls:'ca'},
+    {label:'Marge brute', val:mb, cls:'mb'},
+    {label:'Résultat net', val:rn, cls:`rn ${rn>=0?'pos':'neg'}`},
+    {label:'Fonds propres', val:fp, cls:'ca'},
+  ].filter(r=>r.val!==0);
+
+  document.getElementById('sankeyBars').innerHTML = rows.map(r=>`
+    <div class="sankey-row">
+      <div class="sankey-label">${r.label}</div>
+      <div class="sankey-bar-wrap">
+        <div class="sankey-bar ${r.cls}" style="width:${pct(r.val)}%">${Math.abs(r.val)>max*0.15?fmtEur(r.val):''}</div>
+      </div>
+      <div class="sankey-value">${fmtEur(r.val)}</div>
+    </div>`).join('');
+}
+
 function loadStatuts(bce) {
   const wrap = document.getElementById('statutsWrap');
-  if (!wrap) return;
-
+  if(!wrap) return;
   const statuts = [];
   const es = new EventSource(`${API}/enterprise/${encodeURIComponent(bce)}/statuts`);
-
-  es.onmessage = (e) => {
+  es.onmessage = e => {
     const data = JSON.parse(e.data);
-
-    if (data.type === 'done' || data.type === 'error') {
+    if(data.type==='done'||data.type==='error') {
       es.close();
-      if (!statuts.length) {
-        wrap.innerHTML = '<div style="color:#5A6B7C;font-size:0.83rem;padding:0.5rem 0">Aucun statut trouvé.</div>';
-      } else {
-        // Retirer le spinner
-        const spinner = wrap.querySelector('.loading-row');
-        if (spinner) spinner.remove();
-      }
+      if(!statuts.length) wrap.innerHTML = '<div style="color:var(--sub);font-size:.83rem;padding:.5rem 0">Aucun statut trouvé.</div>';
+      else { const sp = wrap.querySelector('.loading-row'); if(sp) sp.remove(); }
       return;
     }
-
     statuts.push(data);
-    // Supprimer spinner si présent et ajouter l'item
-    const spinner = wrap.querySelector('.loading-row');
-    if (spinner) spinner.remove();
-
+    const sp = wrap.querySelector('.loading-row'); if(sp) sp.remove();
     const item = document.createElement('div');
     item.className = 'statut-item';
-    item.innerHTML = `
-      <div class="statut-dot"></div>
-      <div>
-        <div class="statut-title">${data.documentTitle || data.documentId || '—'}</div>
-        <div class="statut-date">${data.deedDate || ''} ${data.documentStatus ? '· ' + data.documentStatus : ''}</div>
-      </div>
-    `;
+    item.innerHTML = `<div class="statut-dot"></div><div><div class="statut-title">${data.documentTitle||data.documentId||'—'}</div><div class="statut-date">${data.deedDate||''} ${data.documentStatus?'· '+data.documentStatus:''}</div></div>`;
     wrap.appendChild(item);
   };
-
-  es.onerror = () => {
-    es.close();
-    if (!statuts.length) {
-      wrap.innerHTML = '<div style="color:#5A6B7C;font-size:0.83rem;padding:0.5rem 0">Statuts non disponibles.</div>';
-    }
-  };
+  es.onerror = () => { es.close(); if(!statuts.length) wrap.innerHTML = '<div style="color:var(--sub);font-size:.83rem;padding:.5rem 0">Statuts non disponibles.</div>'; };
 }
 </script>
-
 </body>
 </html>
